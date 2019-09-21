@@ -414,7 +414,7 @@ class SudokuPdfDoc:
             <br/>Le sudoku anthropomorphique n'en trouvera donc pas parce qu'il ne sait pas faire de choix...
             """%(nbRejsolutions)
         if nbRejsolutions == 1:
-            grilleValeurs = [['' for i in xrange(9)] for i in xrange(9)] 
+            grilleValeurs = [['' for i in range(9)] for i in range(9)] 
             for (x, y), valeur in  valeurs: grilleValeurs[x][y] = str(valeur)
             for x, y in verts: miniGrilleStyle.append(('BACKGROUND', (y, x), (y, x), colors.lightgreen))
             #cree la table avec les valeurs et la taille de chaque cellule
@@ -505,7 +505,7 @@ class SudokuPdfDoc:
         multipleStyle.leading = 7
         multipleStyle.fontSize = 6
         # creje la valeur sous forme d'une matrice 9x9, l'initialise ah vide
-        grilleValeurs = [['' for i in xrange(9)] for i in xrange(9)] 
+        grilleValeurs = [['' for i in range(9)] for i in range(9)] 
         # et la remplit avec les valeurs et leur format
         for (x, y), listeValeurs in valeursDic.items():
             listeValeurs.sort()
