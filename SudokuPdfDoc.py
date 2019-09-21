@@ -126,8 +126,8 @@ class SudokuPdfDoc:
     def enTestePremiehrePage(self, canvas, doc):
         self.numeroPage +=1
         canvas.saveState()
-        racine = '/'.join(path.dirname(path.abspath(sys.argv[0])).split('/')[:-2])
-        latecon = Image('%s/lAtecon/images/echiquierLatejcon4T.png'%(racine), width=5.51*cm, height=2.00*cm)
+        imageLogo = '%s/echiquierLatejcon4T.png'%(path.dirname( __file__))
+        latecon = Image(imageLogo, width=5.51*cm, height=2.00*cm)
         latecon.drawOn(canvas, 1*cm, A4[1]-(3*cm))
         doc.handle_nextPageTemplate('pageSuivante')
         basdepageStyle = ParagraphStyle('basdepage')
@@ -143,8 +143,8 @@ class SudokuPdfDoc:
     def enTestePageSuivante(self, canvas, doc):
         self.numeroPage +=1
         canvas.saveState()
-        racine = '/'.join(path.dirname(path.abspath(sys.argv[0])).split('/')[:-2])
-        latecon = Image('%s/lAtecon/images/echiquierLatejcon5T.png'%(racine), width=1.48*cm, height=1*cm)
+        imageLogo = '%s/echiquierLatejcon5T.png'%(path.dirname( __file__))
+        latecon = Image(imageLogo, width=1.48*cm, height=1*cm)
         latecon.drawOn(canvas, 1*cm, A4[1]-(2*cm))
         basdepageStyle = ParagraphStyle('basdepage')
         basdepageStyle.fontName = 'Helvetica-Bold'
