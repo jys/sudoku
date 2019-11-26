@@ -38,7 +38,7 @@ def main():
         if localDistant.startswith('loc'): local = True
         elif localDistant.startswith('dis'): local = False
         else: raise Exception('INCONNU : {}'.format(sys.argv[1]))
-        ServeurHtml(localDistant)
+        ServeurHtml(local)
     except Exception as exc:
         if len(exc.args) == 0: usage()
         else:
@@ -48,7 +48,7 @@ def main():
         sys.exit()
         
 class ServeurHtml():
-    def __init__(self, localDistant):
+    def __init__(self, local):
         self.ejnoncej = ''
         # init la socket
         c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -58,7 +58,7 @@ class ServeurHtml():
         # 1 seul client a la fois, ca permet d'utiliser la socket de connexion pour la reponse
         c.listen(1)  
         # si local, lance le client firefox
-        if localDistant: subprocess.run(['firefox', 'http://localhost:{}'.format(PORT)])
+        if local: subprocess.run(['firefox', 'http://localhost:{}'.format(PORT)])
         # attend l'utilisateur et ce, indefiniment
         while True:
             try:
