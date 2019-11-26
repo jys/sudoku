@@ -79,7 +79,10 @@ def main():
 # 2) intermejdiaire : une table qui regroupe les grilles et leur titre et les prejsente en ligne (1, 2 ou 3 par ligne)
 # 3) le plus haut : le regroupement des lignes de grilles et du numejro de tour. C'est pour controsler les sauts de page 
 class SudokuPdfDoc:
-    def __init__(self, nomFichierSortie, identifiant):
+    def __init__(self):
+        return
+    
+    def init(self, nomFichierSortie, identifiant):
         #self.styles = getSampleStyleSheet()
         self.tousLesStyles()
         self.identifiant = identifiant

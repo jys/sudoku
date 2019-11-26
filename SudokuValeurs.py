@@ -130,6 +130,10 @@ class SudokuValeurs:
     def lesCellulesAffectejes(self):
         return self.valeursAffectejes.keys() 
     
+    # donne la liste des cellules affectejes avec leur valeur
+    def lesValeursAffectejes(self):
+        return self.valeursAffectejes 
+    
     # donne la liste des cellules du tour 
     def lesCellulesduTour(self):
         return self.valeursduTour.keys() 

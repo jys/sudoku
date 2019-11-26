@@ -34,6 +34,11 @@ def main():
     lignes = sys.argv[1]
     
     sudokuVejrification = SudokuVejrification(lignes)
+    cellulesInvalides = sudokuVejrification.lesInvaliditejs()
+    if len(cellulesInvalides) != 0: 
+        print('INCOMPATIBILITÉS sur cellules : ' + ', '.join([str(elem) for elem in cellulesInvalides]))
+        return
+    
     nombreCellulesNonVides = sudokuVejrification.nombreCellulesNonVides()
     print ("La grille a %d cellules dejjah affectejes"%(nombreCellulesNonVides))
     (tropDeSolutions, nombreSolutions) = sudokuVejrification.nombreSolutions()
@@ -60,11 +65,15 @@ class SudokuVejrification:
                 cellule = noLigne + idx + 1
                 valeurs[cellule] = valeur
         #vejrifie la validitej de la grille
+        self.invaliditejs = set()
         for cellule in valeurs.keys():
             for contrainte in self.sudokuContraintes.contraintesSurUneCellule(cellule):
                 if contrainte in valeurs:
                     if cellule != contrainte and valeurs[cellule] == valeurs[contrainte]: 
-                        raise Exception('ERREUR : grille non conforme : cellules %d et %d'%(cellule, contrainte))        
+                        self.invaliditejs.add(cellule)
+                        self.invaliditejs.add(contrainte)
+        # si non conforme, inutile de chercher ah rejsoudre
+        if len(self.invaliditejs) != 0: return
         #et rejsoud par rejcursivitej
         self.tropDeSolutions = False
         self.nbCellulesNonVides = len(valeurs)
@@ -115,8 +124,11 @@ class SudokuVejrification:
     def lesValeurs(self):
         return self.valeurs.items()
             
+    def lesInvaliditejs(self):
+        return self.invaliditejs
+        
     def nombreSolutions(self):
-        return (self.tropDeSolutions, self.rejsultat)
+        return self.tropDeSolutions, self.rejsultat
         
     def nombreCellulesNonVides(self):
         return self.nbCellulesNonVides
