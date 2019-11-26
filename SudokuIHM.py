@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
  
 import sys
-from os import path
+from os import path, name
 import socket
 import urllib
 import re
@@ -38,7 +38,13 @@ def main():
         if localDistant.startswith('loc'): local = True
         elif localDistant.startswith('dis'): local = False
         else: raise Exception('INCONNU : {}'.format(sys.argv[1]))
-        ServeurHtml(local)
+        # teste le rejpertoire pour y mettre les rejsultats
+        scriptsDir = path.dirname(sys.argv[0])
+        with open(path.join(scriptsDir, 'SudokuIHM.conf'), 'r') as conf:
+            cheminRelatif = conf.readline().strip()
+        rejpertoire = path.abspath(path.join(scriptsDir, cheminRelatif))
+        print(rejpertoire)
+        ServeurHtml(local, rejpertoire)
     except Exception as exc:
         if len(exc.args) == 0: usage()
         else:
@@ -48,7 +54,8 @@ def main():
         sys.exit()
         
 class ServeurHtml():
-    def __init__(self, local):
+    def __init__(self, local, rejpertoire):
+        self.rejpertoire = rejpertoire
         self.ejnoncej = ''
         # init la socket
         c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -58,7 +65,10 @@ class ServeurHtml():
         # 1 seul client a la fois, ca permet d'utiliser la socket de connexion pour la reponse
         c.listen(1)  
         # si local, lance le client firefox
-        if local: subprocess.run(['firefox', 'http://localhost:{}'.format(PORT)])
+        if local: 
+            if name == 'nt': commande = '"C:\Program Files\Mozilla Firefox\firefox.exe"'
+            else: commande = 'firefox'
+            subprocess.run([commande, 'http://localhost:{}'.format(PORT)])
         # attend l'utilisateur et ce, indefiniment
         while True:
             try:
@@ -156,9 +166,7 @@ class ServeurHtml():
         
     ###################################
     def afficheCalculPdf(self, csock):
-        #le rejpertoire courant pour y foutre le pdf
-        rejpertoire = path.abspath(path.curdir)
-        succehs, nbAffectations, tour, nomFichierSortie = self.sudoku.resoudSudoku(rejpertoire)
+        succehs, nbAffectations, tour, nomFichierSortie = self.sudoku.resoudSudoku(self.rejpertoire)
         if succehs:
             csock.sendall("<p>SUCCÈS !".encode('utf-8'))
         else:
