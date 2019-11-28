@@ -43,8 +43,9 @@ def main():
         with open(path.join(scriptsDir, 'SudokuIHM.conf'), 'r') as conf:
             cheminRelatif = conf.readline().strip()
         rejpertoire = path.abspath(path.join(scriptsDir, cheminRelatif))
+        if not path.isdir(rejpertoire): raise Exception('RÉPERTOIRE INCONNU : {}'.format(rejpertoire))
         print(rejpertoire)
-        ServeurHtml(local, rejpertoire)
+        ServeurHtml(local, rejpertoire, scriptsDir)
     except Exception as exc:
         if len(exc.args) == 0: usage()
         else:
@@ -54,8 +55,9 @@ def main():
         sys.exit()
         
 class ServeurHtml():
-    def __init__(self, local, rejpertoire):
+    def __init__(self, local, rejpertoire, scriptsDir):
         self.rejpertoire = rejpertoire
+        self.scriptsDir = scriptsDir
         self.ejnoncej = ''
         # init la socket
         c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -101,13 +103,6 @@ class ServeurHtml():
                 print (exc.args)
 
     ###################################
-    def afficheSaisieGrille(self, csock):
-        self.afficheEnTeste(csock)
-        self.afficheTitreEtSaisie(csock)
-        self.afficheRejsultatVide(csock)
-        self.afficheQueue(csock)
-        
-    ###################################
     def traiteCopierColler(self, csock, donnejesRecues):
         self.ejnoncej = ''
         # copiercoller=003104800,000000000,400508001,790060048,080473090,530010027,800302004,000000000,002701500
@@ -149,9 +144,14 @@ class ServeurHtml():
             print('saisie-grille ERRONNÉE ({})'.format(len(self.ejnoncej)))
             self.afficheSaisieGrille(csock)
             return
+        # avec le programme de calcul maintenant
+        lignes = self.ejnoncej.replace('|', ',')
+        lignes = lignes.replace('.', '0')
+        self.sudoku = Sudoku(lignes)
         # affiche
         self.afficheEnTeste(csock)
         self.afficheTitreEtSaisie(csock)
+        self.afficheCalculPartiel(csock)
         self.afficheValeursPossibles(csock)
         self.afficheQueue(csock)
        
@@ -165,25 +165,105 @@ class ServeurHtml():
         self.afficheQueue(csock)
         
     ###################################
-    def afficheCalculPdf(self, csock):
-        succehs, nbAffectations, tour, nomFichierSortie = self.sudoku.resoudSudoku(self.rejpertoire)
-        if succehs:
-            csock.sendall("<p>SUCCÈS !".encode('utf-8'))
-        else:
-            csock.sendall("<p>ÉCHEC !".encode('utf-8'))
+    def afficheSaisieGrille(self, csock):
+        self.afficheEnTeste(csock)
+        self.afficheTitreEtSaisie(csock)
+        self.afficheRejsultatVide(csock)
+        self.afficheQueue(csock)
+        
+    ###################################
+    def afficheTitreEtSaisie(self, csock):
+        imageHtml = self.imageBase64("{}/echiquierLatejcon4-200T.png".format(self.scriptsDir))
         csock.sendall((
-            """ Le sudoku anthropomorphique a affecté {} valeurs en {} tours</br>
-            Le résultat est consultable sur {}<p>
-            """.format(nbAffectations, tour, nomFichierSortie)).encode('utf-8'))
-        fichier = path.basename(nomFichierSortie)
-        csock.sendall(('<a href="{}" target="_blank"></a>'.format(fichier)).encode('utf-8'))
-      
+            """        
+        <table><tr><td><h1>Le sudoku anthropomorphique de</h1></td><td>{}</td></tr>
+        </table>
+        <table class="saisiecc"><tr><td height="50px">
+        <form name="saisie-cc" method="post" action="saisie-cc">
+            <input type="text" id="copiercoller" name="copiercoller" maxlength="90" size="89" value="{}"/>
+            <input type="submit" value="V">
+        </form>
+        </td></tr></table>
+        <br/>
+        """.format(imageHtml, self.ejnoncej)).encode('utf-8'))
+        
+        csock.sendall(
+            """
+        <table><tr><td  class="zone-saisie">
+            <form name="saisie-grille" method="post" action="saisie-grille">
+            """.encode('utf-8'))
+        
+        inputId = 0
+        ejnoncej = self.ejnoncej.replace('|', '')
+        for ligne in range(1, 10):
+            csock.sendall(('<div id="ligne{}" class="ligne-saisie">\n'.format(ligne)).encode('utf-8'))
+            for colonne in range(1, 10):
+                if inputId < len(ejnoncej): valeur = ejnoncej[inputId]
+                else: valeur = ''
+                if valeur == '.': valeur = ''
+                inputId +=1
+                html = '<input type="text" id="{}" name="{}{}" maxlength="1" value="{}" class="chiffre'.format(inputId, ligne, colonne, valeur)
+                if colonne in (3, 6): html += ' sep'
+                if ligne in (4, 7): html += ' sep2'
+                if inputId == 1: html += '" autofocus/>\n'
+                else: html += '"/>\n'
+                csock.sendall(html.encode('utf-8'))
+            csock.sendall('</div>\n'.encode('utf-8'))
+ 
+        csock.sendall(
+            """
+                    <br/>
+                </div>
+                <p>&nbsp;</p><br/>
+                <div>
+                <input type="submit" name="raz" value="raz" formmethod="post">
+                <input type="submit" name="soumettre" value="soumettre" formmethod="post">
+                </div>
+            </form>
+            """.encode('utf-8'))
+        
+    ###################################
+    def afficheRejsultatVide(self, csock):
+        csock.sendall(
+            """
+            </td>
+            <td class="zone-blanche"/>
+            <td class="zone-rejsultat">
+            </td></tr></table>
+            """.encode('utf-8'))
+        
+    ###################################
+    def afficheCalculPartiel(self, csock):
+        # affiche les informations de validitej
+        lesInvalides = self.sudoku.cellulesInvalides()
+        if len(lesInvalides) != 0:
+            csock.sendall('<p>La grille présente des incompatibilités sur les cellules marquées en rouge</p>\n'.encode('utf-8'))
+        else:
+            # le diagnostic par la mejthode bourrin
+            tropDeSolutions, rejsultat = self.sudoku.nombreSolutions()
+            if rejsultat == 0:
+                csock.sendall("<p>La grille n'a aucune solution</p>\n".encode('utf-8'))
+            elif rejsultat == 1:
+                csock.sendall("<p>La grille a une solution et une seule</p>\n".encode('utf-8'))
+            elif tropDeSolutions:
+                csock.sendall("<p>La grille a plus de 100 solutions</p>\n".encode('utf-8'))
+            else:
+                csock.sendall(("<p>La grille a {} solutions</p>\n".format(rejsultat)).encode('utf-8'))
+            # le calcul par le sudoku anthropomorphique
+            csock.sendall("""
+            <form name="calcul" method="post" action="calcul-sudoku">
+                <input type="submit" value="Tentative de résolution par le Sudoku anthropomorphique">
+            </form>
+                """.encode('utf-8'))
+        csock.sendall(
+            """
+            </td>
+            <td class="zone-blanche"/>
+            <td class="zone-rejsultat">
+            """.encode('utf-8'))
+        
     ###################################
     def afficheValeursPossibles(self, csock):
-        # avec le programme de calcul maintenant
-        lignes = self.ejnoncej.replace('|', ',')
-        lignes = lignes.replace('.', '0')
-        self.sudoku = Sudoku(lignes)
         lesInvalides = self.sudoku.cellulesInvalides()
         lesValeurs, lesPossibles = self.sudoku.valeurs()
         correspondance = [
@@ -232,84 +312,21 @@ class ServeurHtml():
             csock.sendall('</tr>\n'.encode('utf-8'))
         csock.sendall('</table>\n'.encode('utf-8'))
         csock.sendall('</td></tr></table>'.encode('utf-8'))
-        # affiche les informations de validitej
-        if len(lesInvalides) != 0:
-            csock.sendall('<p>La grille présente des incompatibilités sur les cellules marquées en rouge</p>\n'.encode('utf-8'))
-            return
-        # le diagnostic par la mejthode bourrin
-        tropDeSolutions, rejsultat = self.sudoku.nombreSolutions()
-        if rejsultat == 0:
-            csock.sendall("<p>La grille n'a aucune solution</p>\n".encode('utf-8'))
-        elif rejsultat == 1:
-            csock.sendall("<p>La grille a une solution et une seule</p>\n".encode('utf-8'))
-        elif tropDeSolutions:
-            csock.sendall("<p>La grille a plus de 100 solutions</p>\n".encode('utf-8'))
+        
+    ###################################
+    def afficheCalculPdf(self, csock):
+        succehs, nbAffectations, tour, nomFichierSortie = self.sudoku.resoudSudoku(self.rejpertoire)
+        if succehs:
+            csock.sendall("<p>SUCCÈS !".encode('utf-8'))
         else:
-            csock.sendall(("<p>La grille a {} solutions</p>\n".format(rejsultat)).encode('utf-8'))
-        # le calcul par le sudoku anthropomorphique
-        csock.sendall("""
-         <form name="calcul" method="post" action="calcul-sudoku">
-            <input type="submit" value="Tentative de résolution par le Sudoku anthropomorphique">
-        </form>
-            """.encode('utf-8'))
-        
-          
-    ###################################
-    def afficheTitreEtSaisie(self, csock):
-        imageHtml = self.imageBase64("echiquierLatejcon4-200T.png")
+            csock.sendall("<p>ÉCHEC !".encode('utf-8'))
         csock.sendall((
-            """        
-        <table><tr><td><h1>Le sudoku anthropomorphique de</h1></td><td>{}</td></tr>
-        </table>
-        <table class="saisiecc"><tr><td height="50px">
-        <form name="saisie-cc" method="post" action="saisie-cc">
-            <input type="text" id="copiercoller" name="copiercoller" maxlength="90" size="89" value="{}"/>
-            <input type="submit" value="V">
-        </form>
-        </td></tr></table>
-        <br/>
-        """.format(imageHtml, self.ejnoncej)).encode('utf-8'))
-        
-        csock.sendall(
-            """
-        <table><tr><td  class="zone-saisie">
-            <form name="saisie-grille" method="post" action="saisie-grille">
-            """.encode('utf-8'))
-        
-        inputId = 0
-        ejnoncej = self.ejnoncej.replace('|', '')
-        for ligne in range(1, 10):
-            csock.sendall(('<div id="ligne{}" class="ligne-saisie">\n'.format(ligne)).encode('utf-8'))
-            for colonne in range(1, 10):
-                if inputId < len(ejnoncej): valeur = ejnoncej[inputId]
-                else: valeur = ''
-                if valeur == '.': valeur = ''
-                inputId +=1
-                html = '<input type="text" id="{}" name="{}{}" maxlength="1" value="{}" class="chiffre'.format(inputId, ligne, colonne, valeur)
-                if colonne in (3, 6): html += ' sep'
-                if ligne in (4, 7): html += ' sep2'
-                if inputId == 1: html += '" autofocus/>\n'
-                else: html += '"/>\n'
-                csock.sendall(html.encode('utf-8'))
-            csock.sendall('</div>\n'.encode('utf-8'))
- 
-        csock.sendall(
-            """
-                    <br/>
-                </div>
-                <p>&nbsp;</p><br/>
-                <div>
-                <input type="submit" name="raz" value="raz" formmethod="post">
-                <input type="submit" name="soumettre" value="soumettre" formmethod="post">
-                </div>
-            </form></td>
-            <td class="zone-rejsultat">
-            """.encode('utf-8'))
-        
-    ###################################
-    def afficheRejsultatVide(self, csock):
-        csock.sendall('</td></tr></table>'.encode('utf-8'))
-        
+            """ Le sudoku anthropomorphique a affecté {} valeurs en {} tours</br>
+            Le résultat est consultable sur {}<p>
+            """.format(nbAffectations, tour, nomFichierSortie)).encode('utf-8'))
+        fichier = path.basename(nomFichierSortie)
+        csock.sendall(('<a href="{}" target="_blank"></a>'.format(fichier)).encode('utf-8'))
+      
     ###################################
     def imageBase64(self, nom):
         try:
@@ -331,7 +348,7 @@ class ServeurHtml():
         <meta charset="utf-8">
         <title>Sudoku anthropomorphique de l'Atejcon</title>
         <style type="text/css">
-            .ligne-saisie input[type='text'].chiffre {width: 32px; }
+            .ligne-saisie input[type='text'].chiffre {width: 25px; }
             .ligne-saisie input[type='text'].sep {margin-right: 2px; }
             .ligne-saisie input[type='text'].sep2 {margin-top: 1px; }
             .ligne-saisie input[type='text'] {
@@ -341,22 +358,25 @@ class ServeurHtml():
                 padding: 0 5px;
                 line-height: 2.81em;
                 font-family: "Open Sans";
-                font-size: 30px;
+                font-size: 25px;
                 float: left;
                 margin-left: -1px;
                 text-align: center; }
-            .ligne-saisie input[type='text'] {height: 41px !important; } 
+            .ligne-saisie input[type='text'] {height: 32px !important; } 
             .ligne-saisie {
                 position:relative;
                 min-height:1px;
                 padding-right:15px; 
-                padding-left:15px}
+                padding-left:30px}
             .ligne-saisie {float:left}
             .ligne-saisie {width:100%}
             .zone-saisie {
-                width:450px; height:500px; 
+                width:390px; height:500px; 
                 text-align:center; vertical-align:center; 
                 background-color: #E5E5E4;}
+            .zone-blanche {
+                width:50px; height:500px; 
+                background-color: white;}
             .zone-rejsultat {
                 width:500px; height:500px; 
                 text-align:center; vertical-align:center; 
