@@ -108,7 +108,7 @@ class Sudoku():
     def nombreSolutions(self):
         return self.sudokuVejrification.nombreSolutions()
             
-    def resoudSudoku(self, rejpertoire):
+    def resoudSudoku(self, rejpertoire, depuisCgi = False):
         # Vejrifie la validitej de la grille
         if not self.grilleValide: 
             cellulesInvalides = self.sudokuVejrification.lesInvaliditejs()
@@ -117,8 +117,11 @@ class Sudoku():
         # 1) inits
         nbCellulesEnoncej = len(self.sudokuValeurs.lesCellulesAffectejes())
         # init le PDF de sortie
-        nomFichierSortie = '%s/sudoku-%s.pdf'%(rejpertoire, self.identifiant)
-        print('====> ', nomFichierSortie)
+        if depuisCgi:
+            nomFichierSortie = path.abspath(rejpertoire)
+        else:
+            nomFichierSortie = '%s/sudoku-%s.pdf'%(path.abspath(rejpertoire), self.identifiant)
+        #print('====> ', nomFichierSortie)
         self.sudokuPdfDoc.init(nomFichierSortie, self.identifiant)
         # 1) affiche l'ejnoncej
         self.sudokuPdfDoc.ejcritTour('ejnoncé')
@@ -184,9 +187,10 @@ class Sudoku():
         # 5) si pas terminej, affiche l'ejchec
         succehs = len(self.sudokuValeurs.lesCellulesAffectejes()) == 81
         if succehs: 
-            print('SUCCEHS : %d valeurs affectejes en %d tours'%(nbAffectations, tour))
+            #print('SUCCEHS : %d valeurs affectejes en %d tours'%(nbAffectations, tour))
+            pass
         else:
-            print('EJCHEC : %d valeurs affectejes en %d tours'%(nbAffectations, tour))
+            #print('EJCHEC : %d valeurs affectejes en %d tours'%(nbAffectations, tour))
             self.sudokuPdfDoc.ejcritEjchec()
             self.sudokuPdfDoc.ejcritTour('pour rejflejchir encore...')
             self.sudokuMejthodes.ejcritValeursPossibles()

@@ -1,0 +1,334 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+ 
+import sys
+from os import path, remove
+import cgi
+from Sudoku import Sudoku
+import cgitb
+cgitb.enable()
+#cgitb.enable(display=0, logdir="/path/to/logdir")
+
+# L'en-tête qui va bien
+print("Content-Type: text/html")
+print()
+
+form = cgi.FieldStorage()
+#print(form)
+
+ordreV = 'V' in form
+ordreRaz = 'raz' in form
+ordreSoumettre = 'soumettre' in form
+ordreTentative = 'tentative' in form
+modedEmploi = ('modedEmploi' in form) ^ ('avecModedEmploi' in form)
+if 'modedEmploi' in form:
+    ordreSoumettre = 'ordreSoumettre' in form
+    ordreTentative = 'ordreTentative' in form
+
+# un peu de mejnage
+fichierPdf = form.getvalue('fichierpdf') or ''
+if path.isfile(fichierPdf): remove(fichierPdf)
+
+# rejcupehre l'ejnoncej
+ejnoncej = form.getvalue('ejnoncej') or ''
+# ejnoncej par copier-coller
+if ordreV:
+    copiercoller = form.getvalue('copiercoller') or ''
+    ejnoncej = ''
+    # ('003000800,700306002,005408300,038104250,000000000,017503980,002607400,800201009,001000700')
+    for caractehre in copiercoller:
+        if caractehre.isdigit(): ejnoncej += caractehre
+        elif caractehre in (' ','.'): ejnoncej += '0'
+# ejnoncej par la grille 
+if ordreSoumettre:
+    ejnoncej = ''
+    for ligne in range(1, 10):
+        for colonne in range(1, 10):
+            valeur = form.getvalue(f'{ligne}{colonne}') or '0'
+            if not valeur.isdigit(): valeur = '0' 
+            ejnoncej += valeur
+# raz ejnoncej
+if ordreRaz:
+    ejnoncej = ''
+# mise en forme de l'ejnoncej
+ejnoncejJoli = ''
+ejnoncejCalcul = ''
+for caractehre in ejnoncej:
+    # max 81 + 8 barres
+    if len(ejnoncejJoli) == 89: break
+    # insertion barre sejparation
+    if len(ejnoncejJoli) %10 == 9: 
+        ejnoncejJoli += '|'
+        ejnoncejCalcul += ','
+    if caractehre == '0': ejnoncejJoli += '.'
+    else: ejnoncejJoli += caractehre
+    ejnoncejCalcul += caractehre
+    
+# 
+    
+# affiche l'en-teste
+print("""
+    <!DOCTYPE html>
+    <html  lang="fr">
+    <head>
+    <meta charset="utf-8">
+    <title>Sudoku anthropomorphique de l'Atejcon</title>
+    <style type="text/css">
+    .ligne-saisie input[type='text'].chiffre {width: 25px; }
+    .ligne-saisie input[type='text'].sep {margin-right: 2px; }
+    .ligne-saisie input[type='text'].sep2 {margin-top: 1px; }
+    .ligne-saisie input[type='text'] {
+        background: #fff;
+        border: 1px solid #d6d6d6;
+        border-radius: 2px;
+        padding: 0 5px;
+        line-height: 2.81em;
+        font-family: "Open Sans";
+        font-size: 25px;
+        float: left;
+        margin-left: -1px;
+        text-align: center; }
+    .ligne-saisie input[type='text'] {height: 32px !important; } 
+    .ligne-saisie {
+        position:relative;
+        min-height:1px;
+        padding-right:15px; 
+        padding-left:30px}
+    .ligne-saisie {float:left}
+    .ligne-saisie {width:100%}
+    .zone-saisie {
+        width:390px; height:500px; 
+        text-align:center; vertical-align:center; 
+        background-color: #E5E5E4;}
+    .zone-blanche {
+        width:50px; height:500px; 
+        background-color: white;}
+    .zone-rejsultat {
+        width:500px; height:500px; 
+        text-align:center; vertical-align:center; 
+        background-color: #f4f4f4;}
+    .tableRejultat {
+        border: 1px solid #d6d6d6; border-collapse: collapse; 
+        background-color: #d6d6d6;}
+    .tableCarrej {border: 1px solid black; border-collapse: collapse; }
+    .tdRej {
+        font-family: "Open Sans";
+        width: 50px; height: 50px;
+        border: 1px solid #d6d6d6; border-collapse: collapse; 
+        empty-cells: show;}
+    .tdSim {
+        background-color: #f4f4f4;
+        font-size: 35px; }
+    .tdErr {
+        background-color: red;
+        font-size: 35px; }
+    .tdMul {
+        background-color: white;
+        font-size: 18px; }
+    .tdMu2 {
+        background-color: white;
+        font-size: 16px; }
+    .saisiecc {
+        background-color: #E5E5E4;}   
+    #copiercoller {
+        font-family:courier, courier new, sans-serif;
+        font-size: 16px; }
+    mi5, .mi5 { color:darkred; font-family:Courier New; font-weight:bold }
+    mi6, .mi6 { color:darkgreen; font-weight:bold }
+    </style>
+    </head>
+    """)
+
+print("""
+    <body>
+    <form action="SudokuAnthropomorphique" method="post">
+    """)
+
+# affiche le titre 
+print("""
+    <table><tr><td>
+    <h1>Le sudoku anthropomorphique de</h1></td><td><img src="../ressources/echiquierLatejcon4-200T.png"/>
+    </td></tr></table>
+    """)
+
+# affiche le champ de saisie
+print(f"""
+    <table class="saisiecc"><tr><td height="50px">
+    <input type="text" name="copiercoller"  id="copiercoller" maxlength="90" size="89" value="{ejnoncejJoli}"/>
+    <input type="submit" name="V" value="V"/>
+    </td></tr></table>
+    <br/>
+    """)
+
+# affiche la grille de saisie
+print("""
+    <table><tr><td  class="zone-saisie">
+    """)
+inputId = 0
+for ligne in range(1, 10):
+    print(f'<div id="ligne{ligne}" class="ligne-saisie">')
+    for colonne in range(1, 10):
+        if inputId < len(ejnoncej): valeur = ejnoncej[inputId]
+        else: valeur = ''
+        if valeur == '0': valeur = ''
+        inputId +=1
+        html = f'<input type="text" id="{inputId}" name="{ligne}{colonne}" maxlength="1" value="{valeur}" class="chiffre'
+        if colonne in (3, 6): html += ' sep'
+        if ligne in (4, 7): html += ' sep2'
+        if inputId == 1: html += '" autofocus/>'
+        else: html += '"/>'
+        print(html)
+    print('</div>')
+print("""
+    <br/><p>&nbsp;</p><br/>
+    <div>
+    <input type="submit" name="raz" value="raz"/>
+    <input type="submit" name="soumettre" value="soumettre"/>
+    </div>
+    """)
+# initialise le calcul 
+if ordreSoumettre or ordreTentative:
+    sudoku = Sudoku(ejnoncejCalcul)
+
+# affiche les rejsultats du calcul partiel 
+if ordreSoumettre:
+    # affiche les informations de validitej
+    lesInvalides = sudoku.cellulesInvalides()
+    if len(lesInvalides) != 0:
+        print('<p>La grille prejsente des incompatibilitejs sur les cellules marquejes en rouge</p>')
+    else:
+        # le diagnostic par la mejthode bourrin
+        tropDeSolutions, rejsultat = sudoku.nombreSolutions()
+        if rejsultat == 0: print("<p>La grille n'a aucune solution</p>")
+        elif rejsultat == 1: print("<p>La grille a une solution et une seule</p>")
+        elif tropDeSolutions: print("<p>La grille a plus de 100 solutions</p>")
+        else: print(f"<p>La grille a {rejsultat} solutions</p>")
+        # le calcul par le sudoku anthropomorphique
+        print('<input type="submit" name="tentative" value="Tentative de rejsolution par le Sudoku anthropomorphique">')
+print("""
+    </td>
+    <td class="zone-blanche"/>
+    <td class="zone-rejsultat">
+    """)
+
+# affiche la grille des valeurs possibles
+if ordreSoumettre:
+    lesValeurs, lesPossibles = sudoku.valeurs()
+    correspondance = [
+        11, 12, 13, 21, 22, 23, 31, 32, 33, 
+        14, 15, 16, 24, 25, 26, 34, 35, 36, 
+        17, 18, 19, 27, 28, 29, 37, 38, 39,
+        41, 42, 43, 51, 52, 53, 61, 62, 63,
+        44, 45, 46, 54, 55, 56, 64, 65, 66,
+        47, 48, 49, 57, 58, 59, 67, 68, 69,
+        71, 72, 73, 81, 82, 83, 91, 92, 93,
+        74, 75, 76, 84, 85, 86, 94, 95, 96,
+        77, 78, 79, 87, 88, 89, 97, 98, 99]
+    print('<table class="tableRejultat">')
+    nbCase = 0
+    for lig in range(1, 4):
+        print('<tr>')
+        for col in range(1, 4):
+            print('<td><table class="tableCarrej">')
+            for lig2 in range(1, 4):
+                print('<tr>')
+                for col2 in range(1, 4):
+                    cellule = correspondance[nbCase]
+                    nbCase +=1
+                    balise = '<td class="tdRej'
+                    if cellule in lesValeurs:
+                        if cellule in lesInvalides: balise +=' tdErr">'
+                        else: balise +=' tdSim">'
+                        print(f'{balise}{lesValeurs[cellule]}</td>')
+                    else:
+                        valeurs = [str(elem) for elem in lesPossibles[cellule]]
+                        valeurs.sort()
+                        if len(valeurs) > 7: balise +=' tdMu2">'
+                        else: balise +=' tdMul">'
+                        if len(valeurs) > 6: 
+                            texte = ''.join(valeurs[:4]) + '<br/>' + ''.join(valeurs[4:])
+                        elif len(valeurs) > 4: 
+                            texte = ' '.join(valeurs[:3]) + '<br/>' + ' '.join(valeurs[3:])
+                        elif len(valeurs) > 2: 
+                            texte = ' '.join(valeurs[:2]) + '<br/>' + ' '.join(valeurs[2:])
+                        else : texte = ' '.join(valeurs)
+                        print(f'{balise}{texte}</td>')
+                print('</tr>')
+            print('</table></td>')
+        print('</tr>')
+    print('</table>')
+print('</td></tr></table>')
+
+# affiche le rejsultat du sudoku anthropomorphique
+if ordreTentative:
+    fichierPdf = f'ressources/{ejnoncej}.pdf'
+    succehs, nbAffectations, tour, raf = sudoku.resoudSudoku(path.abspath(fichierPdf), True)
+    if succehs: print("<p>SUCCÈS !")
+    else: print("<p>ÉCHEC !")
+    print(f""" 
+        <br/>Le sudoku anthropomorphique a affecté {nbAffectations} valeurs en {tour} tours</br>
+        Le rejsultat est consultable <a target="_blank" href="../{fichierPdf}"><b>ici là ici</b></a></p>
+        """)
+        #csock.sendall(('<a href="{}" target="_blank"></a>'.format(fichier)).encode('utf-8'))
+
+# le mode d'emploi
+print("""
+    <div id="af3">
+    <br/>
+    <input type="submit" name="modedEmploi" value="mode d'emploi" style="font-size: 10pt"/>
+    """)
+if modedEmploi:
+    print("""
+        <i>Pour masquer ce mode d'emploi, il suffit de cliquer sur le bouton <mi6>mode d'emploi</mi6>.</i>
+        <p><b>ejnoncé :</b> Il y a deux façons de renseigner la grille, 
+        1) directement par <mi6>la grille 9x9</mi6>, 
+        2) par un copier-coller validé par le bouton <mi6>V</mi6> dans la <mi6>fenestre horizontale</mi6> 
+        sous une de ces formes :
+        <br/><mi5>003000800700306002005408300038104250000000000017503980002607400800201009001000700</mi5> ou
+        <br/><mi5>003000800,700306002,005408300,038104250,000000000,017503980,002607400,800201009,001000700</mi5> ou
+        <br/><mi5>..3...8..|7..3.6..2|..54.83..|.381.425.|.........|.175.398.|..26.74..|8..2.1..9|..1...7..</mi5> ou un mejlange des trois.
+        <br/><b>sauvegarde de l'ejnoncé :</b> Par un copier-coller depuis la <mi6>fenestre horizontale</mi6>. 
+        <br/><b>remise à zejro de l'ejnoncé :</b> Par le bouton <mi6>raz</mi6>
+        </p>
+        <p><b>soumission :</b> Par le bouton <mi6>soumettre</mi6>. 
+        La grille est analyseje, les anomalies sont ejventuellement signalejes. 
+        Puis un programme de force brute trouve et affiche le nombre de solutions.
+        <br/>Les valeurs possibles de chaque case vide sont affichejes dans <mi6>la grille 9x9</mi6> de droite.
+        </p>
+        <p><b>sudoku anthropomorphique :</b> Par le bouton <mi6>Tentative de rejsolution par le Sudoku anthropomorphique</mi6>. Le programme tente de rejsoudre la grille et indique s'il rejussit ou ejchoue.
+        </p>
+        <p><b>affichage du rejsultat :</b> Le programme a expliqué comment il a rejussi ou ejchoué dans un rapport PDF qu'on peut lire ou tejlejcharger en cliquant sur le lien <mi6>ici là ici</mi6>.
+        </p>
+    """)
+print('</div>')
+
+
+
+# passage de l'ejtat
+print(f'<input type="hidden" name="ejnoncej" value="{ejnoncej}"/>')
+if ordreSoumettre: print(f'<input type="hidden" name="ordreSoumettre" value="1"/>')
+if ordreTentative: 
+    print(f'<input type="hidden" name="fichierpdf" value="{fichierPdf}"/>')
+    print(f'<input type="hidden" name="ordreTentative" value="1"/>')
+if modedEmploi: print(f'<input type="hidden" name="avecModedEmploi" value="1"/>')
+
+print('</form>')
+
+# un script pour faciliter la saisie de la grille au format grille 
+print("""
+    <script>
+        var inputs = document.getElementsByClassName('chiffre');
+        for (var i=0; i < inputs.length; i++) 
+            inputs[i].addEventListener('input', prochain);
+        function prochain() {
+            //il faut un signe "-" pour que ca calcule, "+" fait de la concatejnation
+            var valeur = this.value;
+            if (valeur != '') {
+                valeur = valeur.replace(/[^1-9]/g, '');
+                this.value = valeur
+                document.getElementById(this.id-1+2).focus();
+            }
+        }
+    </script>
+    """)
+print('</body></html>')
