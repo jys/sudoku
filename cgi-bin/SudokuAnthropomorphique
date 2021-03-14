@@ -20,7 +20,7 @@ ordreV = 'V' in form
 ordreRaz = 'raz' in form
 ordreSoumettre = 'soumettre' in form
 ordreTentative = 'tentative' in form
-modedEmploi = ('modedEmploi' in form) ^ ('avecModedEmploi' in form)
+modedEmploi = ('modedEmploi' in form) ^ ('sansModedEmploi' not in form)
 if 'modedEmploi' in form:
     ordreSoumettre = 'ordreSoumettre' in form
     ordreTentative = 'ordreTentative' in form
@@ -310,7 +310,7 @@ if ordreSoumettre: print(f'<input type="hidden" name="ordreSoumettre" value="1"/
 if ordreTentative: 
     print(f'<input type="hidden" name="fichierpdf" value="{fichierPdf}"/>')
     print(f'<input type="hidden" name="ordreTentative" value="1"/>')
-if modedEmploi: print(f'<input type="hidden" name="avecModedEmploi" value="1"/>')
+if not modedEmploi: print(f'<input type="hidden" name="sansModedEmploi" value="1"/>')
 
 print('</form>')
 
