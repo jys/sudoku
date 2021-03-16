@@ -147,7 +147,7 @@ print("""
 # affiche le titre 
 print("""
     <table><tr><td>
-    <h1>Le sudoku anthropomorphique de</h1></td><td><img src="../ressources/echiquierLatejcon4-200T.png"/>
+    <h1><i>le sudoku anthropomorphique de</i></h1></td><td><img src="../ressources/echiquierLatejcon4-200T.png"/>
     </td></tr></table>
     """)
 
