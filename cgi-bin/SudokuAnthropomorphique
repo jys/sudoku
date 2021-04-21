@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
  
 import sys
-from os import path, remove
+from os import path, remove, environ
+import datetime
 import cgi
 from Sudoku import Sudoku
 import cgitb
@@ -64,7 +65,19 @@ for caractehre in ejnoncej:
     else: ejnoncejJoli += caractehre
     ejnoncejCalcul += caractehre
     
-# 
+# la trace
+timbreDeTemps = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+adrIp = environ['REMOTE_ADDR']
+nomServeur = environ['SERVER_NAME']
+if ordreV: ordre = 'V'
+elif ordreRaz: ordre = 'R'
+elif ordreSoumettre: ordre = 'S'
+elif ordreTentative: ordre = 'T'
+else: ordre = '?'
+with open('ressources/traces.csv', 'a') as trace:
+    trace.write(f'{timbreDeTemps};{nomServeur};{adrIp};{ordre};{ejnoncej}\n')
+
+ 
     
 # affiche l'en-teste
 print("""
