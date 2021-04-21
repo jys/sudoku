@@ -66,6 +66,7 @@ for caractehre in ejnoncej:
     ejnoncejCalcul += caractehre
     
 # la trace
+fichierTrace = path.join(path.dirname(path.realpath(__file__)), '..', 'ressources/traces.csv')
 timbreDeTemps = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 adrIp = environ['REMOTE_ADDR']
 nomServeur = environ['SERVER_NAME']
@@ -74,11 +75,9 @@ elif ordreRaz: ordre = 'R'
 elif ordreSoumettre: ordre = 'S'
 elif ordreTentative: ordre = 'T'
 else: ordre = '?'
-with open('ressources/traces.csv', 'a') as trace:
+with open(fichierTrace, 'a') as trace:
     trace.write(f'{timbreDeTemps};{nomServeur};{adrIp};{ordre};{ejnoncej}\n')
 
- 
-    
 # affiche l'en-teste
 print("""
     <!DOCTYPE html>
@@ -274,15 +273,14 @@ print('</td></tr></table>')
 
 # affiche le rejsultat du sudoku anthropomorphique
 if ordreTentative:
-    fichierPdf = f'ressources/{ejnoncej}.pdf'
+    fichierPdf = path.join(path.dirname(path.realpath(__file__)), '..', 'ressources', f'{ejnoncej}.pdf')
     succehs, nbAffectations, tour, raf = sudoku.resoudSudoku(path.abspath(fichierPdf), True)
     if succehs: print("<p>SUCCÈS !")
     else: print("<p>ÉCHEC !")
     print(f""" 
         <br/>Le sudoku anthropomorphique a affecté {nbAffectations} valeurs en {tour} tours</br>
-        Le rejsultat est consultable <a target="_blank" href="../{fichierPdf}"><b>ici là ici</b></a></p>
+        Le rejsultat est consultable <a target="_blank" href="../ressources/{ejnoncej}.pdf"><b>ici là ici</b></a></p>
         """)
-        #csock.sendall(('<a href="{}" target="_blank"></a>'.format(fichier)).encode('utf-8'))
 
 # le mode d'emploi
 print("""
