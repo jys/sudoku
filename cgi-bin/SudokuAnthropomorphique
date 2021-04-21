@@ -1,7 +1,8 @@
-#!/usr/bin/env python3
+#!/home/latejcon/webserver-files/sudoku-venv/bin/python3
 # -*- coding: utf-8 -*-
  
 import sys
+import os
 from os import path, remove
 import cgi
 from Sudoku import Sudoku
@@ -147,7 +148,7 @@ print("""
 # affiche le titre 
 print("""
     <table><tr><td>
-    <h1>Le sudoku anthropomorphique de</h1></td><td><img src="../ressources/echiquierLatejcon4-200T.png"/>
+    <h1><i>le sudoku anthropomorphique de</i></h1></td><td><img src="../ressources/echiquierLatejcon4-200T.png"/>
     </td></tr></table>
     """)
 
@@ -261,13 +262,14 @@ print('</td></tr></table>')
 
 # affiche le rejsultat du sudoku anthropomorphique
 if ordreTentative:
-    fichierPdf = f'ressources/{ejnoncej}.pdf'
+    
+    fichierPdf = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'ressources', f'{ejnoncej}.pdf')
     succehs, nbAffectations, tour, raf = sudoku.resoudSudoku(path.abspath(fichierPdf), True)
     if succehs: print("<p>SUCCÈS !")
     else: print("<p>ÉCHEC !")
     print(f""" 
         <br/>Le sudoku anthropomorphique a affecté {nbAffectations} valeurs en {tour} tours</br>
-        Le rejsultat est consultable <a target="_blank" href="../{fichierPdf}"><b>ici là ici</b></a></p>
+        Le rejsultat est consultable <a target="_blank" href="../ressources/{ejnoncej}.pdf"><b>ici là ici</b></a></p>
         """)
         #csock.sendall(('<a href="{}" target="_blank"></a>'.format(fichier)).encode('utf-8'))
 
