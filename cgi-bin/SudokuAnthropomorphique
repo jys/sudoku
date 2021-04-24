@@ -69,17 +69,18 @@ for caractehre in ejnoncej:
 # la trace
 fichierTrace = path.join(path.dirname(path.realpath(__file__)), '..', 'ressources/traces.csv')
 timbreDeTemps = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-adrIp = ''
-port = ''
 if 'REMOTE_ADDR' in environ: adrIp = environ['REMOTE_ADDR']
+else: adrIp = ''
 if 'REMOTE_PORT' in environ: port = environ['REMOTE_PORT']
-if ordreV: ordre = 'V'
+else: port = ''
+if 'HTTP_USER_AGENT' in environ: agent = environ['HTTP_USER_AGENT']
+else: environ = ''
 elif ordreRaz: ordre = 'R'
 elif ordreSoumettre: ordre = 'S'
 elif ordreTentative: ordre = 'T'
 else: ordre = '?'
 with open(fichierTrace, 'a') as trace:
-    trace.write(f'{timbreDeTemps};{adrIp};{port};{ordre};{ejnoncej}\n')
+    trace.write(f'{timbreDeTemps} | {adrIp} | {port} | {agent} | {ordre} | {ejnoncej}\n')
 
 # affiche l'en-teste
 print("""
