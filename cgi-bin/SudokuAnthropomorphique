@@ -75,6 +75,7 @@ if 'REMOTE_PORT' in environ: port = environ['REMOTE_PORT']
 else: port = ''
 if 'HTTP_USER_AGENT' in environ: agent = environ['HTTP_USER_AGENT']
 else: environ = ''
+if ordreV: ordre = 'V'
 elif ordreRaz: ordre = 'R'
 elif ordreSoumettre: ordre = 'S'
 elif ordreTentative: ordre = 'T'
