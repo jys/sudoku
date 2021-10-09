@@ -90,6 +90,7 @@ print("""
     <head>
     <meta charset="utf-8">
     <title>Sudoku anthropomorphique de l'Atejcon</title>
+    <link rel="icon" type="image/png" href="../ressources/faviconLaR.png"/>
     <style type="text/css">
     .ligne-saisie input[type='text'].chiffre {width: 25px; }
     .ligne-saisie input[type='text'].sep {margin-right: 2px; }
