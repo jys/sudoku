@@ -45,14 +45,17 @@ def main():
     #nom du fichier de sortie. On prend le chemin moins la fin 
     racine = '/'.join(path.dirname(path.abspath(sys.argv[0])).split('/')[:-1])
     nomFichierSortie = '%s/rejsultats/SudokuPdf-test.pdf'%(racine)
-    sudokuPdfDoc = SudokuPdfDoc(nomFichierSortie, '0123456789')
+    sudokuPdfDoc = SudokuPdfDoc()
+    sudokuPdfDoc.init(nomFichierSortie, '0123456789')
     valeurs = [((1,7),8),((1,7),2),((3,2),6),((3,2),7),((3,2),8),((3,2),9),((1,2),1),((5,5),3),((5,5),2),((5,5),1),((5,5),9),((5,5),8),((5,5),6),((8,3),1),((8,3),7),((8,3),6),((8,3),5),((8,3),2),((3,5),2),((7,1),3),((0,6),4),((4,0),5),((4,0),2),((4,0),8),((6,8),6)]
     verts = [(3,5)]
     sudokuPdfDoc.ejcritTour('ejnoncé')
     sudokuPdfDoc.dessineGrille([((1,7),8),((3,2),6),((1,2),1),((5,5),3)], [], [], [], [], [])
     sudokuPdfDoc.pdfGrilles()
-    sudokuPdfDoc.ejcritRejsolution(False, 1, 22, valeurs, verts)
-    sudokuPdfDoc.ejcritRejsolution(False, 0, 22, valeurs, verts)
+    sudokuPdfDoc.ejcritRejsolution(False, 1, 22, valeurs, valeurs, verts)
+    sudokuPdfDoc.ejcritRejsolution(False, 0, 23, valeurs, valeurs, verts)
+    sudokuPdfDoc.ejcritRejsolution(True, 100, 24, valeurs, valeurs, verts)
+    sudokuPdfDoc.ejcritRejsolution(False, 7, 25, valeurs, valeurs, verts)
     sudokuPdfDoc.pdfGrilles()
     sudokuPdfDoc.ejcritTour('tour n° 1')
     sudokuPdfDoc.ejcritTitreTable('par mejthode n° 1')
@@ -71,7 +74,7 @@ def main():
     sudokuPdfDoc.dessineGrille(valeurs, verts, [(7,1)], [(6,8),(8,3),(5,5),(1,7),(3,2),(4,0)], [((5,5),8),((8,3),1)], [((1,7),2),((5,5),8),((4,0),5)], [((1,7),8),((7,1),3)])
     # teste couleur 
     sudokuPdfDoc.pdfGrilles()
-    sudokuPdfDoc.testeCouleur()
+    #sudokuPdfDoc.testeCouleur()
     sudokuPdfDoc.termine()
     
 #il y a 3 niveaux de tables imbriquejes pour donner la solution du problehme de sudoku
@@ -392,7 +395,7 @@ class SudokuPdfDoc:
             ('VALIGN', (0,0), (-1,-1), 'MIDDLE')]
     
     #############################################
-    def ejcritRejsolution(self, tropDeSolutions, nbRejsolutions, nbCellulesOccupees, valeurs, verts):
+    def ejcritRejsolution(self, tropDeSolutions, nbRejsolutions, nbCellulesOccupees, valeurs, valeurs2, verts):
         # commence par afficher les grilles en attente
         self.pdfGrilles()
         miniGrilleStyle = self.grilleStyle()
@@ -407,23 +410,34 @@ class SudokuPdfDoc:
         if nbRejsolutions == 0: texte += """<b>Cette grille n'a aucune solution !! </b>
             <br/>Le sudoku anthropomorphique n'en trouvera donc pas...
             """
-        elif tropDeSolutions: texte += """<b>Cette grille a plus de %d solutions !!</b>
+        elif tropDeSolutions: texte += """<b>Cette grille a plus de %d solutions !!</b> 
+            dont voici 2 exemples :
             <br/>Le sudoku anthropomorphique n'en trouvera donc pas parce qu'il ne sait pas faire de choix...
             """%(nbRejsolutions)
         elif nbRejsolutions == 1: texte += """<b>Cette grille a une solution et une seule ! </b>
             <br/>Le sudoku anthropomorphique va faire ce qu'il peut pour la trouver...
             """
-        else: texte += """<b>Cette grille a %d solutions ! </b>
+        else: texte += """<b>Cette grille a %d solutions ! </b> 
+            dont voici 2 exemples :
             <br/>Le sudoku anthropomorphique n'en trouvera donc pas parce qu'il ne sait pas faire de choix...
             """%(nbRejsolutions)
-        if nbRejsolutions == 1:
+        if nbRejsolutions != 0:
             grilleValeurs = [['' for i in range(9)] for i in range(9)] 
             for (x, y), valeur in  valeurs: grilleValeurs[x][y] = str(valeur)
             for x, y in verts: miniGrilleStyle.append(('BACKGROUND', (y, x), (y, x), colors.lightgreen))
             #cree la table avec les valeurs et la taille de chaque cellule
             grille = Table(grilleValeurs, C_CEL2, C_CEL2)
             grille.setStyle(miniGrilleStyle)
-            table = Table([[Paragraph(texte, self.explicationsStyle), grille]], [14.2*cm, C_TAB2 + 2*C_CEL2])
+            if nbRejsolutions == 1:
+                table = Table([[Paragraph(texte, self.explicationsStyle), grille]], [14.2*cm, C_TAB2 + 2*C_CEL2])
+            else:
+                grilleValeurs2 = [['' for i in range(9)] for i in range(9)] 
+                for (x, y), valeur in  valeurs2: grilleValeurs2[x][y] = str(valeur)
+                for x, y in verts: miniGrilleStyle.append(('BACKGROUND', (y, x), (y, x), colors.lightgreen))
+                #cree la table avec les valeurs et la taille de chaque cellule
+                grille2 = Table(grilleValeurs2, C_CEL2, C_CEL2)
+                grille2.setStyle(miniGrilleStyle)
+                table = Table([[Paragraph(texte, self.explicationsStyle), grille, grille2]], [11*cm, C_TAB2 + 2*C_CEL2])
             table.setStyle([
                 #('INNERGRID', (0,0), (-1,-1), 0.1, colors.black), 
                 #('BOX', (0,0), (-1,-1), 0.1, colors.black), 

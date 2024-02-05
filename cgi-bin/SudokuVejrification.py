@@ -52,6 +52,8 @@ class SudokuVejrification:
         #inits
         self.sudokuContraintes = SudokuContraintes()
         self.rejsultat = 0
+        self.valeurs = {}   # 1er rejsultat trouvej
+        self.valeurs2 = {}  # dernier rejsultat trouvej
         #initialise la table des valeurs avec l'ejnoncej
         valeurs = {}
         noLigne = 0
@@ -91,7 +93,8 @@ class SudokuVejrification:
         cellulesVides = set(self.sudokuContraintes.toutesCellules()) - set(valeurs.keys())
         #si toutes les cellules sont pourvues, succehs, on sauvegarde le rejsultat
         if len(cellulesVides) == 0: 
-            self.valeurs = copy.deepcopy(valeurs)
+            if self.rejsultat == 0: self.valeurs = copy.deepcopy(valeurs)   # 1er rejsultat trouvej
+            else: self.valeurs2 = copy.deepcopy(valeurs)                    # dernier rejsultat trouvej
             self.rejsultat +=1
             self.tropDeSolutions = self.rejsultat == MAX_SOLUTIONS
             return
@@ -122,7 +125,7 @@ class SudokuVejrification:
         return valeursInterdites 
     
     def lesValeurs(self):
-        return self.valeurs.items()
+        return self.valeurs.items(), self.valeurs2.items()
             
     def lesInvaliditejs(self):
         return self.invaliditejs

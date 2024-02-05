@@ -663,16 +663,25 @@ class SudokuMejthodes:
     def ejcritVerification(self, sudokuVejrification):
         lesCellulesEnoncej = self.sudokuValeurs.lesCellulesAffectejes()
         (tropDeSolutions, nbreSolutions) = sudokuVejrification.nombreSolutions()
+        # pas de solution
+        if nbreSolutions == 0:
+            self.sudokuPdfDoc.ejcritRejsolution(False, 0, len(lesCellulesEnoncej), [], [], [])
+            return
+        # au moins 1 solution
+        lesValeurs, lesValeurs2 = sudokuVejrification.lesValeurs()
+        valeurs = []
+        verts = []
+        for (cellule, valeur) in lesValeurs: 
+            valeurs.append((coordonnejes(cellule), valeur))
+            if cellule not in lesCellulesEnoncej: verts.append(coordonnejes(cellule))
         if nbreSolutions == 1:
-            lesValeurs = sudokuVejrification.lesValeurs()
-            valeurs = []
-            verts = []
-            for (cellule, valeur) in lesValeurs: 
-                valeurs.append((coordonnejes(cellule), valeur))
-                if cellule not in lesCellulesEnoncej: verts.append(coordonnejes(cellule))
-            self.sudokuPdfDoc.ejcritRejsolution(False, 1, len(lesCellulesEnoncej), valeurs, verts)
-        else:
-            self.sudokuPdfDoc.ejcritRejsolution(tropDeSolutions, nbreSolutions, len(lesCellulesEnoncej), [], [])
+            self.sudokuPdfDoc.ejcritRejsolution(False, 1, len(lesCellulesEnoncej), valeurs, [], verts)
+            return
+        # plusieurs solutions 
+        valeurs2 = []
+        for (cellule, valeur) in lesValeurs2: 
+            valeurs2.append((coordonnejes(cellule), valeur))
+        self.sudokuPdfDoc.ejcritRejsolution(tropDeSolutions, nbreSolutions, len(lesCellulesEnoncej), valeurs, valeurs2, verts)
      
     ##########################################
     # trouve les valeurs affectejes et les valeurs possibles
