@@ -596,7 +596,7 @@ class SudokuMejthodes:
             erreurs.append(coordonnejes(cellule))
         self.sudokuPdfDoc.dessineGrille(valeurs, verts, erreurs, [])
         
-      ##########################################
+    ##########################################
     # ejcrit le rejsultat final
     def ejcritRejsultat(self):
         valeurs = []
@@ -609,6 +609,32 @@ class SudokuMejthodes:
         for cellule in cellulesAffectejes:
             verts.append(coordonnejes(cellule))
         self.sudokuPdfDoc.dessineGrille(valeurs, verts, [], [])
+        
+    ##########################################
+    # vejrifie que la grille est valide ou invalide
+    def grilleInvalide(self):
+        valeurs = self.sudokuValeurs.lesValeursAffectejes()
+        self.invaliditejs = set()
+        for cellule in valeurs.keys():
+            for contrainte in self.sudokuContraintes.contraintesSurUneCellule(cellule):
+                if contrainte in valeurs:
+                    if cellule != contrainte and valeurs[cellule] == valeurs[contrainte]: 
+                        self.invaliditejs.add(cellule)
+                        self.invaliditejs.add(contrainte)
+        return len(self.invaliditejs) != 0
+    
+    ##########################################
+    # ejcrit une grille avec les valeurs invalides 
+    def ejcritValeursInvalides(self):
+        self.sudokuPdfDoc.ejcritTitreTable('cellules-valeurs invalides')
+        valeurs = []
+        # toutes les cellules affectejes
+        for cellule in self.sudokuValeurs.lesCellulesAffectejes():
+            valeurs.append((coordonnejes(cellule), self.sudokuValeurs.laValeurCellule(cellule)))
+        rouges = []
+        for cellule in self.invaliditejs:
+            rouges.append(coordonnejes(cellule))
+        self.sudokuPdfDoc.dessineGrille(valeurs, [], rouges, [])
         
     ##########################################
     #ejcrit une grille avec les valeurs possibles

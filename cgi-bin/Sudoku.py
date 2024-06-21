@@ -133,7 +133,13 @@ class Sudoku():
         tour = 0
         coloration = False
         while True:
-            # affiche le nombre de cellules affectejes d'une valeur
+            # vejrifie que la grille est toujours cohejrente
+            grilleInvalide = self.sudokuMejthodes.grilleInvalide()
+            if grilleInvalide: 
+                self.sudokuMejthodes.ejcritValeursInvalides()
+                self.sudokuPdfDoc.pdfGrilles()
+                break
+        # affiche le nombre de cellules affectejes d'une valeur
             #print ('tour n° %d : %d cellules affectejes'%(tour, len(sudokuValeurs.lesCellulesAffectejes())))  
             # n° tour suivant, celui sur lequel on travaille dans la boucle
             tour +=1
@@ -186,10 +192,7 @@ class Sudoku():
         self.sudokuPdfDoc.pdfGrilles()
         # 5) si pas terminej, affiche l'ejchec
         succehs = len(self.sudokuValeurs.lesCellulesAffectejes()) == 81
-        if succehs: 
-            #print('SUCCEHS : %d valeurs affectejes en %d tours'%(nbAffectations, tour))
-            pass
-        else:
+        if not grilleInvalide and not succehs: 
             #print('EJCHEC : %d valeurs affectejes en %d tours'%(nbAffectations, tour))
             self.sudokuPdfDoc.ejcritEjchec()
             self.sudokuPdfDoc.ejcritTour('pour rejflejchir encore...')
